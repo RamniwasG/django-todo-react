@@ -1,40 +1,40 @@
-import { createStore, combineReducers, applyMiddleware, compose } from 'redux'
-// import createSagaMiddleware from 'redux-saga';
+import { createStore, combineReducers, applyMiddleware } from 'redux'
+import createSagaMiddleware from 'redux-saga';
+import { composeWithDevTools } from 'redux-devtools-extension'
 import { reducer as reduxFormReducer } from 'redux-form';
 import { appReducer } from './reducers';
 import { connectRouter, routerMiddleware } from 'connected-react-router';
-// import rootSaga from './saga/';
+import rootSaga from './saga/';
 
 const createBrowserHistory = require('history').createBrowserHistory;
 export const history = createBrowserHistory();
 
 const logger = (store: any) => (next: any) => (action: any) => {
 	let result = next(action)
-	console.log('next state', store.getState().router.location)
+	console.log('next state', store.getState().router)
 	return result
 }
 
-const rootReducer = (history: any) => combineReducers({
-	router: connectRouter(history),
+const rootReducer = () => combineReducers({
+	...appReducer,
 	form: reduxFormReducer,
-	...appReducer
+	router: connectRouter(history)
 })
 
-// const isDev = process.env.NODE_ENV === 'development'
-const composeEnhancers = compose // (isDev && window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__) || compose;
-// const sagaMiddleware = createSagaMiddleware()
+const sagaMiddleware = createSagaMiddleware()
 
-const store = createStore(
-	rootReducer(history),
-	composeEnhancers(
-		applyMiddleware(
-			routerMiddleware(history),
-			// sagaMiddleware,
-			logger
-		)
+const composeEnhancers = composeWithDevTools(
+	applyMiddleware(
+		routerMiddleware(history),
+		sagaMiddleware,
+		logger
 	)
 )
+const store = createStore(
+	rootReducer,
+	composeEnhancers
+)
 
-// sagaMiddleware.run(rootSaga);
+sagaMiddleware.run(rootSaga);
 
 export default store;
